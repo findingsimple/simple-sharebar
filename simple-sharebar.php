@@ -74,6 +74,15 @@ class Simple_Sharebar {
 			
 			if ( get_option('simple_sharebar-toggle-css-include') != 1 )
 				wp_enqueue_style( 'simple-sharebar', self::get_url( '/css/simple-sharebar.min.css', __FILE__ ) );
+
+			wp_localize_script( 'simple-sharebar', 'sharebar_args', array( 
+				'swidth' => '65', 
+				'minwidth' => '1000',
+				'position' => 'left',
+				'leftOffset' => '20',
+				'rightOffset' => '10'
+				)
+			);
 		
 		}
 		
