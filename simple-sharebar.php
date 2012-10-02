@@ -64,7 +64,7 @@ class Simple_Sharebar {
 
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles_and_scripts'), 100 );
 		
-		//add_action( 'the_content', array( __CLASS__, 'insert_sharebar') );
+		//add_action( 'the_content', array( __CLASS__, 'display_sharebar') );
 
 		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_facebook' ), 10, 2 ); 
 		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_twitter' ), 20, 2  ); 
@@ -101,11 +101,13 @@ class Simple_Sharebar {
 	 *
 	 * @since 1.0
 	 */
-	public static function insert_sharebar ( $vert = true , $print = true, $id = false ) {
+	public static function display_sharebar ( $vert = true , $print = true, $id = false ) {
 	
 		global $post;
 		
 		$sharebar_hide = get_post_meta( $post->ID , 'sharebar_hide' , true );
+		
+		$title = true;
 		
 		$args = array(
 			'url' => Simple_Sharebar::get_share_url(),
@@ -117,30 +119,39 @@ class Simple_Sharebar {
 		$services = apply_filters( 'simple_sharebar_services', $services = array() , $args );
 
 		if( empty( $sharebar_hide ) && !empty( $services ) ) {
-		
+			
 			if ( $vert ) {
+
+				$list = '<div class="simple-sharebar vertical">' . "\n";
+			
+				if ( $title )
+					$list .= '<h4>Share the knowledge</h4>';
 					
-				$list = '<ul id="sharebar">' . "\n";
+				$list .= '<ul class="simple-sharebar-wrapper">' . "\n";
 				
 				foreach ( $services as $service ) {
 							
-					$list .= '<li>' . $service['vert'] . '</li>';
+					$list .= '<li class="' . $service['slug'] . '-container" >' . $service['vert'] . '</li>';
 				
 				}
 			
 			} else {
 
-				$list = '<ul id="sharebar-horizontal">' . "\n";
+				$list = '<div class="simple-sharebar horizontal">' . "\n";
+
+				$list .= '<ul class="simple-sharebar-wrapper">' . "\n";
 				
 				foreach ( $services as $service ) {
 							
-					$list .= '<li>' . $service['horz'] . '</li>';
+					$list .= '<li class="' . $service['slug'] . '-container">' . $service['horz'] . '</li>';
 				
 				}			
 			
 			}
-			
+						
 			$list .= '</ul>' . "\n";
+			
+			$list .= '</div>' . "\n";
 			
 		}
 		
@@ -160,6 +171,7 @@ class Simple_Sharebar {
 	
 		$service = array(
 			'name' => 'Facebook Like Button',
+			'slug' => 'facebook',
 			'vert' => '<div class="fb-like" data-href="' . $args['url'] . '" data-send="false" data-layout="box_count" data-width="450" data-show-faces="false"></div>',
 			'horz' => '<div class="fb-like" data-href="' . $args['url'] . '" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false"></div>'
 		);
@@ -174,6 +186,7 @@ class Simple_Sharebar {
 
 		$service = array(
 			'name' => 'Twitter Share Button',
+			'slug' => 'twitter',
 			'vert' => '<a href="https://twitter.com/share" class="twitter-share-button" data-url="' . $args['url'] . '" data-text="' . $args['description'] . '" data-dnt="true" data-count="vertical">Tweet</a>',
 			'horz' => '<a href="https://twitter.com/share" class="twitter-share-button" data-url="' . $args['url'] . '" data-text="' . $args['description'] . '" data-dnt="true" data-count="horizontal">Tweet</a>'
 		);
@@ -188,6 +201,7 @@ class Simple_Sharebar {
 
 		$service = array(
 			'name' => 'Google +1 Button',
+			'slug' => 'google_plus_one',
 			'vert' => '<div class="g-plusone" data-href="' . $args['url'] . '" data-size="tall" ></div>',
 			'horz' => '<div class="g-plusone" data-href="' . $args['url'] . '" data-size="medium" ></div>'
 		);
@@ -202,6 +216,7 @@ class Simple_Sharebar {
 	
 		$service = array(
 			'name' => 'Pinterest "Pin It" Button',
+			'slug' => 'pinterest',
 			'vert' => '<a href="http://pinterest.com/pin/create/button/?url=' . urlencode( $args['url'] ) . '&amp;media=' . urlencode( $args['image'] ) . '&amp;description=' . urlencode( $args['description'] ) . '" class="pin-it-button" count-layout="vertical"><img border="0" src="//assets.pinterest.com/images/PinExt.png" title="Pin It" /></a>',
 			'horz' => '<a href="http://pinterest.com/pin/create/button/?url=' . urlencode( $args['url'] ) . '&amp;media=' . urlencode( $args['image'] ) . '&amp;description=' . urlencode( $args['description'] ) . '" class="pin-it-button" count-layout="horizontal"><img border="0" src="//assets.pinterest.com/images/PinExt.png" title="Pin It" /></a>'
 		);
