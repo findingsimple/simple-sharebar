@@ -52,11 +52,24 @@ add_action( 'init', 'initialize_sharebar', -1 );
  */
 class Simple_Sharebar {
 
+	static $defaults = array( 
+		'swidth' => '65', 
+		'minwidth' => '1000',
+		'position' => 'left',
+		'leftOffset' => '20',
+		'rightOffset' => '10'
+	);
+
 	public static function init() {
 
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles_and_scripts'), 100 );
 		
-		add_action( 'the_content', array( __CLASS__, 'insert_sharebar') );
+		//add_action( 'the_content', array( __CLASS__, 'insert_sharebar') );
+
+		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_facebook' ), 10, 2 ); 
+		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_twitter' ), 20, 2  ); 
+		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_google_plus_one' ), 30, 2  ); 
+		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_pinterest' ), 40, 2  ); 
 
 	}
 
@@ -74,15 +87,10 @@ class Simple_Sharebar {
 			
 			if ( get_option('simple_sharebar-toggle-css-include') != 1 )
 				wp_enqueue_style( 'simple-sharebar', self::get_url( '/css/simple-sharebar.min.css', __FILE__ ) );
-
-			wp_localize_script( 'simple-sharebar', 'sharebar_args', array( 
-				'swidth' => '65', 
-				'minwidth' => '1000',
-				'position' => 'left',
-				'leftOffset' => '20',
-				'rightOffset' => '10'
-				)
-			);
+			
+			$args = apply_filters( 'simple_sharebar_defaults', self::$defaults );
+			
+			wp_localize_script( 'simple-sharebar', 'sharebar_args', $args );
 		
 		}
 		
@@ -93,28 +101,273 @@ class Simple_Sharebar {
 	 *
 	 * @since 1.0
 	 */
-	public static function insert_sharebar ( $print = true ) {
+	public static function insert_sharebar ( $vert = true , $print = true, $id = false ) {
 	
 		global $post;
 		
 		$sharebar_hide = get_post_meta( $post->ID , 'sharebar_hide' , true );
 		
-		if( empty( $sharebar_hide ) ) {
-					
-			$str = '<ul id="sharebar">' . "\n";
-			
-			$str .= '<li>test</li>';
+		$args = array(
+			'url' => Simple_Sharebar::get_share_url(),
+			'title' => Simple_Sharebar::get_share_title(),
+			'description' => Simple_Sharebar::get_share_description(),
+			'image' => Simple_Sharebar::get_share_image()
+		);
+				
+		$services = apply_filters( 'simple_sharebar_services', $services = array() , $args );
 
-			$str .= '</ul>' . "\n";
+		if( empty( $sharebar_hide ) && !empty( $services ) ) {
+		
+			if ( $vert ) {
+					
+				$list = '<ul id="sharebar">' . "\n";
+				
+				foreach ( $services as $service ) {
+							
+					$list .= '<li>' . $service['vert'] . '</li>';
+				
+				}
 			
-			if ( $print )
-				echo $str; 
-			else 
-				return $str;
+			} else {
+
+				$list = '<ul id="sharebar-horizontal">' . "\n";
+				
+				foreach ( $services as $service ) {
+							
+					$list .= '<li>' . $service['horz'] . '</li>';
+				
+				}			
+			
+			}
+			
+			$list .= '</ul>' . "\n";
 			
 		}
 		
+		if ( $list ) {
+		
+			if ( $print )	
+				echo $list; 
+			else 
+				return $list;
+				
+		}
+		
 	}
+	
+	
+	public static function sharebar_facebook( $services , $args ) {
+	
+		$service = array(
+			'name' => 'Facebook Like Button',
+			'vert' => '<div class="fb-like" data-href="' . $args['url'] . '" data-send="false" data-layout="box_count" data-width="450" data-show-faces="false"></div>',
+			'horz' => '<div class="fb-like" data-href="' . $args['url'] . '" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false"></div>'
+		);
+		
+		$services['facebook'] = apply_filters( 'simple_sharebar_facebook', $service, $args );	
+							
+		return $services;	
+	
+	}
+		
+	public static function sharebar_twitter( $services , $args ) {
+
+		$service = array(
+			'name' => 'Twitter Share Button',
+			'vert' => '<a href="https://twitter.com/share" class="twitter-share-button" data-url="' . $args['url'] . '" data-text="' . $args['description'] . '" data-dnt="true" data-count="vertical">Tweet</a>',
+			'horz' => '<a href="https://twitter.com/share" class="twitter-share-button" data-url="' . $args['url'] . '" data-text="' . $args['description'] . '" data-dnt="true" data-count="horizontal">Tweet</a>'
+		);
+		
+		$services['twitter'] = apply_filters( 'simple_sharebar_twitter', $service, $args );	
+							
+		return $services;	
+	
+	}
+
+	public static function sharebar_google_plus_one( $services , $args ) {
+
+		$service = array(
+			'name' => 'Google +1 Button',
+			'vert' => '<div class="g-plusone" data-href="' . $args['url'] . '" data-size="tall" ></div>',
+			'horz' => '<div class="g-plusone" data-href="' . $args['url'] . '" data-size="medium" ></div>'
+		);
+		
+		$services['google_plus_one'] = apply_filters( 'simple_sharebar_google_plus_one', $service, $args );	
+							
+		return $services;	
+	
+	}
+	
+	public static function sharebar_pinterest( $services , $args ) {
+	
+		$service = array(
+			'name' => 'Pinterest "Pin It" Button',
+			'vert' => '<a href="http://pinterest.com/pin/create/button/?url=' . urlencode( $args['url'] ) . '&amp;media=' . urlencode( $args['image'] ) . '&amp;description=' . urlencode( $args['description'] ) . '" class="pin-it-button" count-layout="vertical"><img border="0" src="//assets.pinterest.com/images/PinExt.png" title="Pin It" /></a>',
+			'horz' => '<a href="http://pinterest.com/pin/create/button/?url=' . urlencode( $args['url'] ) . '&amp;media=' . urlencode( $args['image'] ) . '&amp;description=' . urlencode( $args['description'] ) . '" class="pin-it-button" count-layout="horizontal"><img border="0" src="//assets.pinterest.com/images/PinExt.png" title="Pin It" /></a>'
+		);
+		
+		$services['pinterest'] = apply_filters( 'simple_sharebar_pinterest', $service, $args );	
+							
+		return $services;	
+	
+	}
+	
+	/**
+	 * Get correct title
+	 *
+	 * @author Jason Conroy <jason@findingsimple.com>
+	 * @since 1.0
+	 */	
+	public static function get_share_title() {
+	
+			global $post;
+	
+			if (is_singular()) {
+				$title = get_the_title();
+			} else if(is_search()) {
+				$title = 'Search';
+			} else if(is_category()) {
+				$title =  'Archive for ' . single_cat_title("", false) ;
+			} else if(is_tag()) {
+				$title = 'Archive for ' . single_tag_title("", false) ;
+			} else if(is_tax()) {
+				$title = 'Archive for ' . single_term_title("", false) ;
+			} else if(is_author()) {
+				$id = get_query_var( 'author' );
+				$title = 'Archive for ' .  get_the_author_meta( 'display_name', $id );
+			} else if(is_date()) {
+				$title = 'Archives by date' ;
+			} else if(is_post_type_archive()) {
+				$title = post_type_archive_title("", false);
+			} else if(is_archive()) {
+				$title = 'Archives';
+			} else if(is_404()) {
+				$title = 'Page Not Found';
+			} else if(is_home()) {
+				$title = get_bloginfo('name');
+			} else if(is_admin()) {
+				$title = get_the_title( $post->ID ); //displays the default value in the admin area
+			}
+	
+			return $title = apply_filters( 'simple_sharebar_share_title', $title );
+	
+	}
+
+	/**
+	 * Get correct description
+	 *
+	 * @author Jason Conroy <jason@findingsimple.com>
+	 * @since 1.0
+	 */		
+	public static function get_share_description() {
+	
+		global $post;
+	
+		if(!empty($post->post_excerpt)){
+			$description = $post->post_excerpt;
+		} if (is_front_page() || is_archive() || is_home() || is_search()) {	
+			$description = trim(strip_shortcodes(strip_tags( get_bloginfo( 'description' ))));
+		} else {
+			$description = trim(strip_shortcodes(strip_tags($post->post_content)));
+		}
+	
+		$pos0 = strpos($description, '.')+1;
+		$pos0 = ($pos0 === false) ? strlen($description) : $pos0;
+		$pos = strpos(substr($description,$pos0),'.');
+		if ($pos < 0 || $pos === false) {
+			$pos = strlen($description);
+		} else {
+			$pos = $pos + $pos0;
+		}
+		$description = str_replace("\n","",substr($description, 0 , $pos));
+		$description = str_replace("\r","",$description);
+		$description = str_replace("\"","'",$description);
+		$description = nl2br($description);
+	 
+		return $description = apply_filters( 'simple_sharebar_share_description', $description );
+		
+	}
+
+
+	/**
+	 * Get correct url
+	 *
+	 * @author Jason Conroy <jason@findingsimple.com>
+	 * @since 1.0
+	 */	
+	public static function get_share_url() {
+	
+		global $post;
+
+		if (is_singular()) {
+			$url = get_permalink();
+		} else if(is_search()) {
+			$search = get_query_var('s');
+			$url = get_bloginfo('url') . "/search/". $search;
+		} else if(is_category()) {
+			$url =  get_category_link( get_queried_object() );
+		} else if(is_tag()) {
+			$url = get_tag_link( get_queried_object() );
+		} else if(is_tax()) {
+			$url = get_term_link( get_queried_object() );
+		} else if(is_author()) {
+			$id = get_query_var( 'author' );
+			$url = get_author_posts_url( $id );
+		} else if(is_year()) {
+			$url = get_year_link( get_query_var('year') );
+		} else if(is_month()) {
+			$url = get_month_link( get_query_var('year') , get_query_var('monthnum') );
+		} else if(is_day()) {
+			$url = get_day_link( get_query_var('year') , get_query_var('monthnum') , get_query_var('day') );
+		} else if(is_post_type_archive()) {
+			$url = get_post_type_archive_link( get_query_var('post_type') );
+		} else if(is_home()) {
+			$url = get_bloginfo('url');
+			$url = preg_replace("~^https?://[^/]+$~", "$0/", $url); //trailing slash
+		} else if( is_admin() ) {
+			$url = get_permalink( $post->ID ); //displays the default value in the admin area
+		}
+
+		return $url = apply_filters( 'simple_sharebar_share_url', $url );
+
+	}
+	
+	/**
+	 * Get correct image
+	 *
+	 * @author Jason Conroy <jason@findingsimple.com>
+	 * @since 1.0
+	 */			
+	public static function get_share_image() {
+	
+		global $post;
+		
+		$image = '';
+		
+		if ( function_exists( 'get_the_image') ) {
+		
+			$image_array = get_the_image( array( 'format' => 'array', 'image_scan' => true , 'size' => 'full', 'default_image' => get_option('simple_facebook-default-image') ) ); 
+						
+			if ( !empty( $image_array['src'] )  )
+				$image = $image_array['src'];
+		
+		} elseif ( has_post_thumbnail() ) {
+					
+			$image_array = wp_get_attachment_image_src( get_post_thumbnail_id( $post->ID ), 'full' );
+
+			if ( $image_array )			
+				$image = $image_array[0];
+		
+		} else {
+		
+			$image = get_option('simple_facebook-default-image');
+		
+		}
+		
+		return $title = apply_filters( 'simple_sharebar_share_image', $image );
+	
+	}
+	
 	
 	/**
 	 * Helper function to get the URL of a given file. 
