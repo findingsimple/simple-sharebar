@@ -54,7 +54,7 @@ class Simple_Sharebar {
 
 	static $defaults = array( 
 		'swidth' => '65', 
-		'minwidth' => '1000',
+		'minwidth' => '768',
 		'position' => 'left',
 		'leftOffset' => '20',
 		'rightOffset' => '10'
