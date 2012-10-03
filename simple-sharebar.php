@@ -26,7 +26,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-//require_once dirname( __FILE__ ) . '/simple-sharebar-admin.php';
+require_once dirname( __FILE__ ) . '/simple-sharebar-admin.php';
 
 if ( ! class_exists( 'Simple_Sharebar' ) ) :
 
@@ -63,8 +63,8 @@ class Simple_Sharebar {
 	public static function init() {
 
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles_and_scripts'), 100 );
-		
-		//add_action( 'the_content', array( __CLASS__, 'display_sharebar') );
+
+		add_filter( 'the_content', array( __CLASS__, 'auto_display_sharebar' ) );
 
 		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_facebook' ), 10, 2 ); 
 		add_filter ( 'simple_sharebar_services', array( __CLASS__, 'sharebar_twitter' ), 20, 2  ); 
@@ -74,7 +74,7 @@ class Simple_Sharebar {
 	}
 
 	/**
-	 * Add qtips2 scripts
+	 * Add sharebar scripts
 	 *
 	 * @since 1.0
 	 */
@@ -90,9 +90,27 @@ class Simple_Sharebar {
 			
 			$args = apply_filters( 'simple_sharebar_defaults', self::$defaults );
 			
+			// will only localize if the simple-sharebar script is enqueued
 			wp_localize_script( 'simple-sharebar', 'sharebar_args', $args );
 		
 		}
+		
+	}
+
+	/**
+	 * Auto display sharebar/s if selected
+	 *
+	 * @since 1.0
+	 */
+	public static function auto_display_sharebar( $content ){
+				
+		if ( get_option('simple_sharebar-toggle-auto-insert') == 1 )
+			$content = self::display_sharebar ( true , false ) . $content;
+		
+		if ( get_option('simple_sharebar-toggle-auto-insert-horizontal') == 1 )
+			$content = $content . self::display_sharebar ( false , false );
+
+		return $content;
 		
 	}
 
@@ -107,7 +125,7 @@ class Simple_Sharebar {
 		
 		$sharebar_hide = get_post_meta( $post->ID , 'sharebar_hide' , true );
 		
-		$title = true;
+		$title = get_option('simple_sharebar-title');
 		
 		$args = array(
 			'url' => Simple_Sharebar::get_share_url(),
@@ -125,7 +143,7 @@ class Simple_Sharebar {
 				$list = '<div class="simple-sharebar vertical">' . "\n";
 			
 				if ( $title )
-					$list .= '<h4>Share the knowledge</h4>';
+					$list .= '<h4>' . $title . '</h4>';
 					
 				$list .= '<ul class="simple-sharebar-wrapper">' . "\n";
 				
