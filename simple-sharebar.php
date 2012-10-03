@@ -120,9 +120,19 @@ class Simple_Sharebar {
 	 * @since 1.0
 	 */
 	public static function display_sharebar ( $vert = true , $print = true, $id = false ) {
-	
+				
 		global $post;
 		
+		// Swap to specified post
+		if ( $id ) {
+					
+			query_posts( array( 'post_type' => 'any', 'p' => $id ) );
+			
+			if ( have_posts() )	
+				the_post();
+			
+		}
+	
 		$sharebar_hide = get_post_meta( $post->ID , 'sharebar_hide' , true );
 		
 		$title = get_option('simple_sharebar-title');
@@ -172,6 +182,10 @@ class Simple_Sharebar {
 			$list .= '</div>' . "\n";
 			
 		}
+		
+		// reset postdata if needed
+		if ( $id )
+			wp_reset_query();
 		
 		if ( $list ) {
 		
