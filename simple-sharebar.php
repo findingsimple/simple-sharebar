@@ -56,6 +56,7 @@ class Simple_Sharebar {
 		'swidth' => '65', 
 		'minwidth' => '768',
 		'position' => 'left',
+		'topOffset' => '10',
 		'leftOffset' => '20',
 		'rightOffset' => '10'
 	);
