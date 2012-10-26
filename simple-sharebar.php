@@ -291,7 +291,9 @@ class Simple_Sharebar {
 				$title = 'Archives';
 			} else if(is_404()) {
 				$title = 'Page Not Found';
-			} else if(is_home()) {
+			} else if(is_home() && !is_front_page()) {
+				$title = get_the_title( get_option('page_for_posts', true) );
+			} else if(is_front_page() || (is_home() && is_front_page()) ) {
 				$title = get_bloginfo('name');
 			} else if(is_admin()) {
 				$title = get_the_title( $post->ID ); //displays the default value in the admin area
@@ -369,7 +371,9 @@ class Simple_Sharebar {
 			$url = get_day_link( get_query_var('year') , get_query_var('monthnum') , get_query_var('day') );
 		} else if(is_post_type_archive()) {
 			$url = get_post_type_archive_link( get_query_var('post_type') );
-		} else if(is_home()) {
+		} else if(is_home() && !is_front_page()) {
+			$url = get_permalink( get_option('page_for_posts', true) );
+		} else if(is_front_page() || (is_home() && is_front_page()) ) {
 			$url = get_bloginfo('url');
 			$url = preg_replace("~^https?://[^/]+$~", "$0/", $url); //trailing slash
 		} else if( is_admin() ) {
