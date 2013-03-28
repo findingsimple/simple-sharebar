@@ -52,6 +52,8 @@ add_action( 'init', 'initialize_sharebar', -1 );
  */
 class Simple_Sharebar {
 
+	static $text_domain;
+
 	static $defaults = array( 
 		'swidth' => '65', 
 		'minwidth' => '768',
@@ -62,7 +64,9 @@ class Simple_Sharebar {
 	);
 
 	public static function init() {
-
+	
+		self::$text_domain = apply_filters( 'simple_sharebar_text_domain', 'simple_sharebar' );
+	
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'enqueue_styles_and_scripts'), 100 );
 
 		add_filter( 'the_content', array( __CLASS__, 'auto_display_sharebar' ) );
@@ -114,7 +118,7 @@ class Simple_Sharebar {
 		return $content;
 		
 	}
-
+	
 	/**
 	 * Display the sharebar
 	 *
